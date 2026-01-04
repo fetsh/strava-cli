@@ -5,10 +5,14 @@ type output_mode =
   | ToFile of string option  (* None = auto temp file *)
   | ToStdout
   | Quiet
+  | Pretty
 
-let save_json ~mode ~prefix json =
+let save_json ~mode ~prefix ?(pretty_printer = fun _ -> ()) json =
   match mode with
   | Quiet -> Lwt.return_ok ()
+  | Pretty ->
+    pretty_printer json;
+    Lwt.return_ok ()
   | ToStdout ->
     print_endline (Yojson.Safe.pretty_to_string json);
     Lwt.return_ok ()
@@ -25,13 +29,13 @@ let save_json ~mode ~prefix json =
     Printf.printf "%s\n" path;
     Lwt.return_ok ()
 
-let handle_result ~mode ~prefix result =
+let handle_result ~mode ~prefix ?pretty_printer result =
   match result with
   | Error e ->
     Printf.eprintf "Error: %s\n" (Api.pp_error e);
     Lwt.return 1
   | Ok json ->
-    let* save_result = save_json ~mode ~prefix json in
+    let* save_result = save_json ~mode ~prefix ?pretty_printer json in
     match save_result with
     | Ok () -> Lwt.return 0
     | Error e ->
@@ -41,7 +45,7 @@ let handle_result ~mode ~prefix result =
 (* Athlete commands *)
 let athlete ~mode () =
   let* result = Api.get_athlete () in
-  handle_result ~mode ~prefix:"athlete" result
+  handle_result ~mode ~prefix:"athlete" ~pretty_printer:Pretty.print_athlete result
 
 let athlete_stats ~mode () =
   let* result = Api.get_athlete () in
@@ -50,7 +54,7 @@ let athlete_stats ~mode () =
   | Ok athlete_json ->
     let id = Yojson.Safe.Util.(athlete_json |> member "id" |> to_int) in
     let* stats_result = Api.get_athlete_stats id in
-    handle_result ~mode ~prefix:"stats" stats_result
+    handle_result ~mode ~prefix:"stats" ~pretty_printer:Pretty.print_stats stats_result
 
 let athlete_zones ~mode () =
   let* result = Api.get_athlete_zones () in
@@ -59,11 +63,11 @@ let athlete_zones ~mode () =
 (* Activity commands *)
 let activities ~mode ?page ?per_page () =
   let* result = Api.get_activities ?page ?per_page () in
-  handle_result ~mode ~prefix:"activities" result
+  handle_result ~mode ~prefix:"activities" ~pretty_printer:Pretty.print_activities result
 
 let activity ~mode ~include_efforts id =
   let* result = Api.get_activity ~include_all_efforts:include_efforts id in
-  handle_result ~mode ~prefix:"activity" result
+  handle_result ~mode ~prefix:"activity" ~pretty_printer:Pretty.print_activity result
 
 let activity_streams ~mode id keys =
   let* result = Api.get_activity_streams id keys in
@@ -99,7 +103,7 @@ let last ~mode n =
     ) activities in
     let successful = List.filter_map (function Ok j -> Some j | Error _ -> None) detailed in
     let combined = `List successful in
-    let* _ = save_json ~mode ~prefix:"last" combined in
+    let* _ = save_json ~mode ~prefix:"last" ~pretty_printer:Pretty.print_activities combined in
     Lwt.return 0
 
 let today ~mode () =
@@ -121,7 +125,7 @@ let today ~mode () =
     ) activities in
     let successful = List.filter_map (function Ok j -> Some j | Error _ -> None) detailed in
     let combined = `List successful in
-    let* _ = save_json ~mode ~prefix:"today" combined in
+    let* _ = save_json ~mode ~prefix:"today" ~pretty_printer:Pretty.print_activities combined in
     Lwt.return 0
 
 let week ~mode () =
@@ -139,7 +143,7 @@ let week ~mode () =
     ) activities in
     let successful = List.filter_map (function Ok j -> Some j | Error _ -> None) detailed in
     let combined = `List successful in
-    let* _ = save_json ~mode ~prefix:"week" combined in
+    let* _ = save_json ~mode ~prefix:"week" ~pretty_printer:Pretty.print_activities combined in
     Lwt.return 0
 
 (* Segment commands *)
@@ -149,7 +153,7 @@ let segment ~mode id =
 
 let segments_starred ~mode ?page ?per_page () =
   let* result = Api.get_starred_segments ?page ?per_page () in
-  handle_result ~mode ~prefix:"segments-starred" result
+  handle_result ~mode ~prefix:"segments-starred" ~pretty_printer:Pretty.print_segments result
 
 let segments_explore ~mode ~bounds ?activity_type ?min_cat ?max_cat () =
   let* result = Api.explore_segments ~bounds ?activity_type ?min_cat ?max_cat () in
@@ -175,4 +179,4 @@ let route ~mode id =
 
 let routes ~mode ?page ?per_page () =
   let* result = Api.get_routes ?page ?per_page () in
-  handle_result ~mode ~prefix:"routes" result
+  handle_result ~mode ~prefix:"routes" ~pretty_printer:Pretty.print_routes result

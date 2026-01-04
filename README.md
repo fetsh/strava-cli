@@ -180,9 +180,69 @@ strava route 12345                         # Get route by ID
 ## Output Options
 
 ```bash
+strava last                        # Save JSON to /tmp/strava-*.json (default)
+strava last --pretty               # Pretty print with tables and emojis
 strava last --raw                  # Print JSON to stdout
 strava last --output my.json       # Save to specific file
 strava last --quiet                # No output, just exit code
+```
+
+### Pretty Output Examples
+
+The `--pretty` flag formats output as human-readable tables with emojis:
+
+**Activities:**
+```bash
+strava activities --pretty --per-page 5
+```
+```
+DATE        TYPE      NAME           DISTANCE  TIME        PACE
+----------  --------  -------------  --------  ----------  --------
+2026-01-03  🏃 Run   Lunch Run      26.18 km  2h 18m 46s  5:18 /km
+2026-01-02  🏃 Run   Night Run      7.52 km   38m 18s     5:05 /km
+2026-01-02  🏃 Run   Afternoon Run  7.08 km   35m 19s     4:59 /km
+```
+
+**Athlete Stats:**
+```bash
+strava stats --pretty
+```
+```
+📊 Athlete Statistics
+=====================
+
+🏃 Recent Runs (4 weeks)
+------------------------
+Activities:  32
+Distance:    396.50 km
+Moving time: 33h 00m 35s
+Elevation:   2741 m
+
+🏃 All Time Runs
+----------------
+Activities:  1676
+Distance:    19680.81 km
+Moving time: 1847h 27m 27s
+```
+
+**Activity Details:**
+```bash
+strava activity 12345678 --pretty
+```
+```
+🏃 Morning Run
+==============
+
+📅 Date:          2026-01-03
+🏃 Sport:         Run
+📏 Distance:      10.5 km
+⏱️  Moving time:   45m 30s
+⏰ Elapsed time:  48m 15s
+⬆️  Elevation:     125 m
+🚀 Avg speed:     13.8 km/h
+👟 Avg pace:      4:20 /km
+❤️  Avg HR:        145 bpm
+💓 Max HR:        165 bpm
 ```
 
 ## jq Examples
@@ -317,9 +377,17 @@ strava routes [--page N] [--per-page N]    # List routes
 strava route <ID>                          # Get route by ID
 
 # Output Options (available for all commands)
+--pretty                                   # Pretty print with tables and emojis
 --raw                                      # Print JSON to stdout
 --output <FILE>                            # Save to specific file
 --quiet                                    # No output, exit code only
+```
+
+**Quick examples:**
+```bash
+strava activities --pretty              # Beautiful table output
+strava last 5 --pretty                  # Last 5 activities formatted
+strava stats --pretty                   # Stats with emojis
 ```
 
 ## Development

@@ -10,12 +10,16 @@ let output_opt =
 let quiet_flag =
   Arg.(value & flag & info ["q"; "quiet"] ~doc:"No output")
 
-let output_mode raw output quiet =
+let pretty_flag =
+  Arg.(value & flag & info ["pretty"] ~doc:"Pretty print output with tables")
+
+let output_mode raw output quiet pretty =
   if quiet then Strava.Commands.Quiet
+  else if pretty then Strava.Commands.Pretty
   else if raw then Strava.Commands.ToStdout
   else Strava.Commands.ToFile output
 
-let output_term = Term.(const output_mode $ raw_flag $ output_opt $ quiet_flag)
+let output_term = Term.(const output_mode $ raw_flag $ output_opt $ quiet_flag $ pretty_flag)
 
 (* Init command *)
 let init_cmd =

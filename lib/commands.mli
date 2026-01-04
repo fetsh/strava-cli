@@ -2,6 +2,7 @@ type output_mode =
   | ToFile of string option
   | ToStdout
   | Quiet
+  | Pretty
 
 (* Athlete commands *)
 val athlete : mode:output_mode -> unit -> int Lwt.t
