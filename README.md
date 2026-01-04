@@ -185,6 +185,65 @@ strava last --output my.json       # Save to specific file
 strava last --quiet                # No output, just exit code
 ```
 
+## jq Examples
+
+Format output as readable tables using `jq`:
+
+### Activities Table
+
+```bash
+strava activities --raw --per-page 10 | jq -r '
+  "DATE       | TYPE | NAME                          | DISTANCE",
+  "-----------|------|-------------------------------|----------",
+  (.[] | "\(.start_date_local[0:10]) | \(.sport_type)  | \(.name | .[0:29] + (" " * (29 - (. | length)))) | \((.distance/1000 | . * 100 | round / 100)) km")'
+```
+
+Output:
+```
+DATE       | TYPE | NAME                          | DISTANCE
+-----------|------|-------------------------------|----------
+2026-01-03 | Run  | Lunch Run                     | 26.18 km
+2026-01-02 | Run  | Night Run                     | 7.52 km
+2026-01-02 | Run  | Afternoon Run                 | 7.08 km
+```
+
+### Detailed Stats with Pace
+
+```bash
+strava last 5 --raw | jq -r '
+  "ACTIVITY | DATE       | TIME  | DISTANCE | AVG HR | PACE",
+  "---------|-----------|-------|----------|--------|--------",
+  (.[] | "\(.name | .[0:8]) | \(.start_date_local[0:10]) | \(.start_date_local[11:16]) | \((.distance/1000 | . * 10 | round / 10)) km | \(.average_heartrate // 0 | round)    | \(if .sport_type == "Run" then ((.moving_time / 60) / (.distance / 1000) | . * 10 | round / 10) else "-" end) min/km")'
+```
+
+### Total Distance This Week
+
+```bash
+strava week --raw | jq '[.[] | .distance] | add / 1000 | round'
+```
+
+### Activities by Type
+
+```bash
+strava activities --raw --per-page 50 | jq -r '
+  group_by(.sport_type) |
+  map({type: .[0].sport_type, count: length, distance: (map(.distance) | add / 1000 | round)}) |
+  .[] | "\(.type): \(.count) activities, \(.distance) km"'
+```
+
+### Extract Specific Fields
+
+```bash
+# Just names and dates
+strava activities --raw --per-page 5 | jq -r '.[] | "\(.start_date_local[0:10]) - \(.name)"'
+
+# Activity IDs for further processing
+strava activities --raw --per-page 5 | jq -r '.[].id'
+
+# Average heart rate for runs
+strava activities --raw --per-page 20 | jq '[.[] | select(.sport_type == "Run") | .average_heartrate] | add / length | round'
+```
+
 ## Credentials
 
 Credentials are stored in SQLite database:
