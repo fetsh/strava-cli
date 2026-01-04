@@ -1,0 +1,4 @@
+(library
+ (name strava)
+ (public_name strava-cli.lib)
+ (libraries cohttp-lwt-unix lwt yojson sqlite3 uri ptime logs fmt))

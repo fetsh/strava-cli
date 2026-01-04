@@ -1,0 +1,80 @@
+# OCaml/Dune build artifacts
+_build/
+*.install
+*.merlin
+.merlin
+
+# OCaml compiled files
+*.cmi
+*.cmo
+*.cmx
+*.cma
+*.cmxa
+*.cmxs
+*.cmt
+*.cmti
+*.annot
+*.o
+*.a
+*.so
+*.byte
+*.native
+
+# Dune artifacts
+*.opam.locked
+dune-workspace.dev
+
+# Editor and IDE files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+
+# Emacs
+\#*\#
+.\#*
+*.elc
+TAGS
+
+# Vim
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+
+# OCaml coverage
+*.coverage
+bisect*.out
+_coverage/
+
+# Local configuration and credentials
+.env
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes
+
+# Test output
+/tmp/strava-*.json
+
+# Distribution
+dist/
+*.tar.gz
+*.zip
+
+# Development notes
+CLAUDE.md

@@ -1,0 +1,304 @@
+# strava-cli
+
+Command-line interface for Strava API written in OCaml.
+
+## Installation
+
+```bash
+opam install . --deps-only
+dune build
+dune install
+```
+
+### Optional: Enable Tab Completion
+
+**Easy Installation (using Makefile):**
+```bash
+# For Bash (user-level)
+make completion-bash
+source ~/.bashrc
+
+# For Zsh (user-level)
+make completion-zsh
+source ~/.zshrc
+
+# For system-wide installation (requires sudo)
+make completion-bash-system  # or completion-zsh-system
+```
+
+**Manual Installation:**
+
+<details>
+<summary>Bash</summary>
+
+```bash
+# User-level installation:
+mkdir -p ~/.bash_completion.d
+cp strava-completion.bash ~/.bash_completion.d/strava
+echo "source ~/.bash_completion.d/strava" >> ~/.bashrc
+source ~/.bashrc
+
+# System-wide installation:
+sudo cp strava-completion.bash /etc/bash_completion.d/strava
+```
+</details>
+
+<details>
+<summary>Zsh</summary>
+
+```bash
+# User-level installation:
+mkdir -p ~/.zsh/completion
+cp strava-completion.zsh ~/.zsh/completion/_strava
+
+# Add to ~/.zshrc if not already present:
+fpath=(~/.zsh/completion $fpath)
+autoload -Uz compinit && compinit
+source ~/.zshrc
+
+# System-wide installation:
+sudo cp strava-completion.zsh /usr/local/share/zsh/site-functions/_strava
+```
+</details>
+
+**Test it:**
+```bash
+strava <TAB>              # Shows all commands
+strava activity --<TAB>   # Shows --efforts, --raw, --output, --quiet
+strava streams 12345 <TAB>  # Shows stream types (heartrate, watts, etc.)
+```
+
+## Initial Setup
+
+### 1. Create Strava API Application
+
+1. Go to [https://www.strava.com/settings/api](https://www.strava.com/settings/api)
+2. Click "Create an App" (or view existing)
+3. Fill in:
+   - **Application Name**: `strava-cli` (or any name)
+   - **Category**: choose any
+   - **Club**: optional
+   - **Website**: `http://localhost`
+   - **Authorization Callback Domain**: `localhost`
+4. Save and note your **Client ID** and **Client Secret**
+
+### 2. Initialize strava-cli
+
+```bash
+strava init
+```
+
+This will:
+1. Ask for your Client ID and Client Secret
+2. Open your browser for Strava authorization
+3. Start a local server to receive the OAuth callback
+4. Store credentials in `~/.config/strava-cli/strava.db`
+
+### 3. Verify Setup
+
+```bash
+strava athlete
+```
+
+Should display your Strava profile as JSON.
+
+## Usage
+
+### Quick Commands
+
+```bash
+# Last activity (full JSON saved to temp file)
+strava last
+
+# Last 5 activities
+strava last 5
+
+# Today's activities
+strava today
+
+# This week's activities
+strava week
+```
+
+### Athlete
+
+```bash
+strava athlete              # Your profile
+strava stats                # Your stats (distance, time, etc.)
+strava zones                # HR and power zones
+```
+
+### Activities
+
+```bash
+# List activities
+strava activities                          # Recent activities
+strava activities --page 2 --per-page 10   # Pagination
+
+# Get activity details
+strava activity 12345678                   # Get activity by ID
+strava activity 12345678 --efforts         # Include segment efforts
+
+# Activity data
+strava streams 12345678 heartrate watts    # Get activity streams
+strava laps 12345678                       # Get laps
+strava azones 12345678                     # Get zones
+strava comments 12345678                   # Get comments
+strava kudos 12345678                      # Get kudos
+```
+
+Available stream types: `time`, `distance`, `latlng`, `altitude`, `velocity_smooth`, `heartrate`, `cadence`, `watts`, `temp`, `moving`, `grade_smooth`
+
+### Segments
+
+```bash
+strava segment 12345                       # Get segment by ID
+strava starred                             # Your starred segments
+strava starred --page 1 --per-page 20      # Pagination
+
+# Explore segments in area (bounds: SW_LAT,SW_LNG,NE_LAT,NE_LNG)
+strava explore --bounds 32.0,34.7,32.2,34.9 --type running
+```
+
+### Segment Efforts
+
+```bash
+strava efforts --segment 12345             # Your efforts on segment
+strava efforts --segment 12345 --start 2024-01-01 --end 2024-12-31
+strava effort 987654321                    # Specific effort by ID
+```
+
+### Gear & Routes
+
+```bash
+strava gear b12345                         # Get gear details
+strava routes                              # List your routes
+strava routes --page 1 --per-page 10       # Pagination
+strava route 12345                         # Get route by ID
+```
+
+## Output Options
+
+```bash
+strava last --raw                  # Print JSON to stdout
+strava last --output my.json       # Save to specific file
+strava last --quiet                # No output, just exit code
+```
+
+## Credentials
+
+Credentials are stored in SQLite database:
+- **Location**: `~/.config/strava-cli/strava.db`
+- **Contents**: client_id, client_secret, access_token, refresh_token, expires_at
+
+Tokens are automatically refreshed when expired.
+
+To reset credentials:
+```bash
+rm ~/.config/strava-cli/strava.db
+strava init
+```
+
+## Rate Limits
+
+Strava API has rate limits:
+- 100 requests per 15 minutes
+- 1000 requests per day
+
+The CLI displays rate limit info on 429 errors.
+
+## Scopes
+
+The CLI requests these OAuth scopes:
+- `read_all` — read private data
+- `activity:read_all` — read all activities including private
+- `activity:write` — required for some read endpoints
+- `profile:read_all` — read full profile
+- `profile:write` — required for some read endpoints
+
+**Note:** This is a read-only CLI. Write scopes are requested because Strava requires them for certain read operations, but no write operations are performed.
+
+## Complete Command Reference
+
+```bash
+# Setup
+strava init                                # Initialize with API credentials
+
+# Athlete
+strava athlete                             # Get profile
+strava stats                               # Get activity stats
+strava zones                               # Get heart rate/power zones
+
+# Activities
+strava activities [--page N] [--per-page N]     # List activities
+strava activity <ID> [--efforts]                # Get activity by ID
+strava streams <ID> <KEYS...>                   # Get activity streams
+strava laps <ID>                                # Get activity laps
+strava azones <ID>                              # Get activity zones
+strava comments <ID>                            # Get activity comments
+strava kudos <ID>                               # Get activity kudos
+
+# Convenience
+strava last [N]                            # Last N activities (default: 1)
+strava today                               # Today's activities
+strava week                                # This week's activities
+
+# Segments
+strava segment <ID>                        # Get segment by ID
+strava starred [--page N] [--per-page N]   # Get starred segments
+strava explore --bounds <BOUNDS> [--type TYPE]  # Explore segments
+
+# Segment Efforts
+strava efforts --segment <ID> [--start DATE] [--end DATE]
+strava effort <ID>                         # Get effort by ID
+
+# Gear & Routes
+strava gear <ID>                           # Get gear by ID
+strava routes [--page N] [--per-page N]    # List routes
+strava route <ID>                          # Get route by ID
+
+# Output Options (available for all commands)
+--raw                                      # Print JSON to stdout
+--output <FILE>                            # Save to specific file
+--quiet                                    # No output, exit code only
+```
+
+## Development
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+### Quick Start for Contributors
+
+```bash
+# Clone and setup
+git clone https://github.com/fetsh/strava-cli.git
+cd strava-cli
+opam install . --deps-only
+
+# Build
+dune build
+
+# Run tests
+dune exec strava -- --help
+
+# Install locally
+dune install
+```
+
+### Project Structure
+
+```
+strava-cli/
+├── bin/main.ml              # CLI entry point
+├── lib/
+│   ├── db.ml                # SQLite storage
+│   ├── auth.ml              # OAuth flow
+│   ├── api.ml               # HTTP client
+│   ├── commands.ml          # Command implementations
+│   └── strava.ml            # Public interface
+└── README.md
+```
+
+## License
+
+MIT - see [LICENSE](LICENSE) file for details
