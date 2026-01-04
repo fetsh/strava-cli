@@ -145,6 +145,7 @@ let print_activity json =
   let get_float key = try json |> member key |> to_float with _ -> 0.0 in
   let get_int key = try json |> member key |> to_int with _ -> 0 in
 
+  let id = get_int "id" in
   let name = get_string "name" in
   let sport = get_string "sport_type" in
   let emoji = sport_emoji sport in
@@ -161,6 +162,7 @@ let print_activity json =
   Printf.printf "\n%s %s\n" emoji name;
   Printf.printf "%s\n\n" (String.make (String.length name + 3) '=');
 
+  Printf.printf "🆔 ID:            %d\n" id;
   Printf.printf "📅 Date:          %s\n" (format_date date);
   Printf.printf "🏃 Sport:         %s\n" sport;
   Printf.printf "📏 Distance:      %s\n" (format_distance distance);
@@ -182,6 +184,37 @@ let print_activity json =
 
   print_newline ()
 
+(* Pretty print gears (bikes and shoes) *)
+let print_gears json =
+  let bikes = try json |> member "bikes" |> to_list with _ -> [] in
+  let shoes = try json |> member "shoes" |> to_list with _ -> [] in
+  let all_gears = bikes @ shoes in
+
+  if List.length all_gears > 0 then begin
+    Printf.printf "\n🛠️  Gear\n";
+    Printf.printf "=====\n\n";
+
+    let headers = ["ID"; "TYPE"; "NAME"; "DISTANCE"; "PRIMARY"; "RETIRED"] in
+    let rows = List.map (fun gear ->
+      let id = try gear |> member "id" |> to_string with _ -> "-" in
+      let name = try gear |> member "name" |> to_string with _ -> "-" in
+      let distance = try gear |> member "converted_distance" |> to_float with _ -> 0.0 in
+      let primary = try gear |> member "primary" |> to_bool with _ -> false in
+      let retired = try gear |> member "retired" |> to_bool with _ -> false in
+      let gear_type = if String.length id > 0 && id.[0] = 'b' then "🚴 Bike" else "👟 Shoe" in
+      [
+        id;
+        gear_type;
+        (if String.length name > 30 then String.sub name 0 27 ^ "..." else name);
+        Printf.sprintf "%.1f km" distance;
+        if primary then "Yes" else "No";
+        if retired then "Yes" else "No";
+      ]
+    ) all_gears in
+    print_table headers rows;
+    print_newline ()
+  end
+
 (* Pretty print athlete *)
 let print_athlete json =
   let get_string key = try json |> member key |> to_string with _ -> "-" in
@@ -200,7 +233,9 @@ let print_athlete json =
   Printf.printf "Location: %s, %s\n" city country;
   if weight > 0.0 then
     Printf.printf "Weight:   %.1f kg\n" weight;
-  Printf.printf "Member since: %s\n\n" (format_date created)
+  Printf.printf "Member since: %s\n" (format_date created);
+
+  print_gears json
 
 (* Pretty print athlete stats *)
 let print_stats json =
@@ -288,3 +323,41 @@ let print_routes json =
     ]
   ) routes in
   print_table headers rows
+
+(* Pretty print single gear *)
+let print_gear json =
+  let get_string key = try json |> member key |> to_string with _ -> "-" in
+  let get_float key = try json |> member key |> to_float with _ -> 0.0 in
+  let get_bool key = try json |> member key |> to_bool with _ -> false in
+
+  let id = get_string "id" in
+  let name = get_string "name" in
+  let brand = get_string "brand_name" in
+  let model = get_string "model_name" in
+  let distance = get_float "converted_distance" in
+  let primary = get_bool "primary" in
+  let retired = get_bool "retired" in
+  let notification_distance = get_float "notification_distance" in
+  let description = get_string "description" in
+
+  let gear_type = if String.length id > 0 && id.[0] = 'b' then "🚴 Bike" else "👟 Shoe" in
+  let emoji = if String.length id > 0 && id.[0] = 'b' then "🚴" else "👟" in
+
+  Printf.printf "\n%s %s\n" emoji name;
+  Printf.printf "%s\n\n" (String.make (String.length name + 3) '=');
+
+  Printf.printf "🆔 ID:            %s\n" id;
+  Printf.printf "🏷️  Type:          %s\n" gear_type;
+  Printf.printf "🏭 Brand:         %s\n" brand;
+  Printf.printf "📦 Model:         %s\n" model;
+  Printf.printf "📏 Distance:      %.1f km\n" distance;
+  if primary then
+    Printf.printf "⭐ Primary:       Yes\n";
+  if retired then
+    Printf.printf "🚫 Retired:       Yes\n";
+  if notification_distance > 0.0 then
+    Printf.printf "🔔 Alert at:      %.0f km\n" notification_distance;
+  if description <> "-" then
+    Printf.printf "📝 Description:   %s\n" description;
+
+  print_newline ()

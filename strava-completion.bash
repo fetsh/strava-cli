@@ -11,7 +11,7 @@ _strava_completions() {
     commands="init athlete stats zones activities activity streams laps azones comments kudos last today week segment starred explore efforts effort gear route routes"
 
     # Common options
-    local common_opts="--raw --output --quiet --help"
+    local common_opts="--raw --output --quiet --pretty --help"
 
     # If we're completing the first argument (command)
     if [ $COMP_CWORD -eq 1 ]; then

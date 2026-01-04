@@ -33,6 +33,7 @@ _strava() {
         '--raw[Output JSON to stdout]'
         '--output[Output file path]:file:_files'
         '--quiet[No output]'
+        '--pretty[Pretty print output with tables]'
         '--help[Show help]'
     )
 

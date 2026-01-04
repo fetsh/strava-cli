@@ -181,7 +181,7 @@ let segment_effort ~mode id =
 (* Gear commands *)
 let gear ~mode id =
   let* result = Api.get_gear id in
-  handle_result ~mode ~prefix:"gear" result
+  handle_result ~mode ~prefix:"gear" ~pretty_printer:Pretty.print_gear result
 
 (* Route commands *)
 let route ~mode id =
