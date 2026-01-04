@@ -196,11 +196,11 @@ The `--pretty` flag formats output as human-readable tables with emojis:
 strava activities --pretty --per-page 5
 ```
 ```
-DATE        TYPE      NAME           DISTANCE  TIME        PACE
-----------  --------  -------------  --------  ----------  --------
-2026-01-03  🏃 Run   Lunch Run      26.18 km  2h 18m 46s  5:18 /km
-2026-01-02  🏃 Run   Night Run      7.52 km   38m 18s     5:05 /km
-2026-01-02  🏃 Run   Afternoon Run  7.08 km   35m 19s     4:59 /km
+ID           DATE        TYPE    NAME           DISTANCE  TIME        PACE
+-----------  ----------  ------  -------------  --------  ----------  --------
+16922800571  2026-01-03  🏃 Run  Lunch Run      26.18 km  2h 18m 46s  5:18 /km
+16916981155  2026-01-02  🏃 Run  Night Run      7.52 km   38m 18s     5:05 /km
+16911686404  2026-01-02  🏃 Run  Afternoon Run  7.08 km   35m 19s     4:59 /km
 ```
 
 **Athlete Stats:**
@@ -211,18 +211,33 @@ strava stats --pretty
 📊 Athlete Statistics
 =====================
 
+🏃 YTD Runs
+-------------
+Activities:  5
+Distance:    55.41 km
+Moving time: 4h 41m 16s
+Elevation:   471 m
+
 🏃 Recent Runs (4 weeks)
-------------------------
+--------------------------
 Activities:  32
 Distance:    396.50 km
 Moving time: 33h 00m 35s
 Elevation:   2741 m
 
 🏃 All Time Runs
-----------------
+------------------
 Activities:  1676
 Distance:    19680.81 km
 Moving time: 1847h 27m 27s
+Elevation:   88254 m
+
+🏊 All Time Swims
+-------------------
+Activities:  451
+Distance:    622.27 km
+Moving time: 195h 50m 12s
+Elevation:   91 m
 ```
 
 **Activity Details:**
@@ -233,6 +248,7 @@ strava activity 12345678 --pretty
 🏃 Morning Run
 ==============
 
+🆔 ID:            12345678
 📅 Date:          2026-01-03
 🏃 Sport:         Run
 📏 Distance:      10.5 km
@@ -243,6 +259,45 @@ strava activity 12345678 --pretty
 👟 Avg pace:      4:20 /km
 ❤️  Avg HR:        145 bpm
 💓 Max HR:        165 bpm
+```
+
+**Athlete Profile with Gear:**
+```bash
+strava athlete --pretty
+```
+```
+👤 Athlete Profile
+==================
+
+Name:     John Doe
+Location: San Francisco, USA
+Weight:   70.0 kg
+Member since: 2018-11-24
+
+🛠️  Gear
+=====
+
+ID         TYPE     NAME                        DISTANCE  PRIMARY  RETIRED
+---------  -------  --------------------------  --------  -------  -------
+b14713521  🚴 Bike  Road Bike Pro               1250.4 km No       No
+g15242544  👟 Shoe  Nike Pegasus 40             650.5 km  No       No
+g16419603  👟 Shoe  Adidas Ultraboost 22        320.8 km  Yes      No
+```
+
+**Gear Details:**
+```bash
+strava gear g15242544 --pretty
+```
+```
+👟 Nike Pegasus 40
+==================
+
+🆔 ID:            g15242544
+🏷️  Type:          👟 Shoe
+🏭 Brand:         Nike
+📦 Model:         Pegasus 40
+📏 Distance:      650.5 km
+🔔 Alert at:      800 km
 ```
 
 ## jq Examples
@@ -385,9 +440,12 @@ strava route <ID>                          # Get route by ID
 
 **Quick examples:**
 ```bash
-strava activities --pretty              # Beautiful table output
-strava last 5 --pretty                  # Last 5 activities formatted
-strava stats --pretty                   # Stats with emojis
+strava activities --pretty              # Beautiful table output with IDs
+strava last --pretty                    # Last activity with details
+strava last 5 --pretty                  # Last 5 activities table
+strava stats --pretty                   # YTD, recent, and all-time stats
+strava athlete --pretty                 # Profile with gear table
+strava gear <ID> --pretty               # Gear details
 ```
 
 ## Development

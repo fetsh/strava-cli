@@ -155,8 +155,8 @@ let print_activity json =
   let elapsed_time = get_int "elapsed_time" in
   let elevation = get_float "total_elevation_gain" in
   let avg_speed = get_float "average_speed" in
-  let avg_hr = get_int "average_heartrate" in
-  let max_hr = get_int "max_heartrate" in
+  let avg_hr = get_float "average_heartrate" in
+  let max_hr = get_float "max_heartrate" in
   let avg_watts = get_int "average_watts" in
 
   Printf.printf "\n%s %s\n" emoji name;
@@ -174,9 +174,9 @@ let print_activity json =
   if sport = "Run" then
     Printf.printf "👟 Avg pace:      %s\n" (format_pace distance moving_time);
 
-  if avg_hr > 0 then begin
-    Printf.printf "❤️  Avg HR:        %d bpm\n" avg_hr;
-    Printf.printf "💓 Max HR:        %d bpm\n" max_hr;
+  if avg_hr > 0.0 then begin
+    Printf.printf "❤️  Avg HR:        %.0f bpm\n" avg_hr;
+    Printf.printf "💓 Max HR:        %.0f bpm\n" max_hr;
   end;
 
   if avg_watts > 0 then
