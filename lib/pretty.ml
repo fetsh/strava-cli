@@ -241,9 +241,21 @@ let print_athlete json =
 let print_stats json =
   let print_totals title totals =
     let count = totals |> member "count" |> to_int in
-    let distance = totals |> member "distance" |> to_float in
-    let moving_time = totals |> member "moving_time" |> to_int in
-    let elevation = totals |> member "elevation_gain" |> to_float in
+    (* distance can be int or float depending on the totals type *)
+    let distance =
+      try totals |> member "distance" |> to_int |> float_of_int
+      with _ -> totals |> member "distance" |> to_float
+    in
+    (* moving_time can be int or float depending on the totals type *)
+    let moving_time =
+      try totals |> member "moving_time" |> to_int
+      with _ -> totals |> member "moving_time" |> to_float |> int_of_float
+    in
+    (* elevation_gain can be int or float *)
+    let elevation =
+      try totals |> member "elevation_gain" |> to_int |> float_of_int
+      with _ -> totals |> member "elevation_gain" |> to_float
+    in
 
     if count > 0 then begin
       Printf.printf "\n%s\n" title;
@@ -258,14 +270,26 @@ let print_stats json =
   Printf.printf "\n📊 Athlete Statistics\n";
   Printf.printf "=====================\n";
 
+  (* YTD (Year to Date) *)
   (try
-    let recent_run = json |> member "recent_run_totals" in
-    print_totals "🏃 Recent Runs (4 weeks)" recent_run
+    let ytd_run = json |> member "ytd_run_totals" in
+    print_totals "🏃 YTD Runs" ytd_run
   with _ -> ());
 
   (try
-    let all_run = json |> member "all_run_totals" in
-    print_totals "🏃 All Time Runs" all_run
+    let ytd_ride = json |> member "ytd_ride_totals" in
+    print_totals "🚴 YTD Rides" ytd_ride
+  with _ -> ());
+
+  (try
+    let ytd_swim = json |> member "ytd_swim_totals" in
+    print_totals "🏊 YTD Swims" ytd_swim
+  with _ -> ());
+
+  (* Recent (4 weeks) *)
+  (try
+    let recent_run = json |> member "recent_run_totals" in
+    print_totals "🏃 Recent Runs (4 weeks)" recent_run
   with _ -> ());
 
   (try
@@ -274,8 +298,24 @@ let print_stats json =
   with _ -> ());
 
   (try
+    let recent_swim = json |> member "recent_swim_totals" in
+    print_totals "🏊 Recent Swims (4 weeks)" recent_swim
+  with _ -> ());
+
+  (* All Time *)
+  (try
+    let all_run = json |> member "all_run_totals" in
+    print_totals "🏃 All Time Runs" all_run
+  with _ -> ());
+
+  (try
     let all_ride = json |> member "all_ride_totals" in
     print_totals "🚴 All Time Rides" all_ride
+  with _ -> ());
+
+  (try
+    let all_swim = json |> member "all_swim_totals" in
+    print_totals "🏊 All Time Swims" all_swim
   with _ -> ());
 
   print_newline ()
