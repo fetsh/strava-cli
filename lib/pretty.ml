@@ -50,26 +50,49 @@ let format_date iso_date =
   else
     iso_date
 
+(* Calculate visual width accounting for emojis *)
+let visual_width s =
+  let len = String.length s in
+  let rec count_chars pos count =
+    if pos >= len then count
+    else
+      let c = Char.code s.[pos] in
+      if c >= 0xF0 then
+        (* 4-byte emoji: displays as 2 terminal characters *)
+        count_chars (pos + 4) (count + 2)
+      else if c >= 0xE0 then
+        (* 3-byte UTF-8 char: displays as 1 character *)
+        count_chars (pos + 3) (count + 1)
+      else if c >= 0xC0 then
+        (* 2-byte UTF-8 char (like ×): displays as 1 character *)
+        count_chars (pos + 2) (count + 1)
+      else
+        (* Regular ASCII: displays as 1 character *)
+        count_chars (pos + 1) (count + 1)
+  in
+  count_chars 0 0
+
 (* Table printing *)
 let print_table headers rows =
   let num_cols = List.length headers in
   let col_widths = Array.make num_cols 0 in
 
-  (* Calculate column widths *)
+  (* Calculate column widths using visual width *)
   List.iteri (fun i h ->
-    col_widths.(i) <- max col_widths.(i) (String.length h)
+    col_widths.(i) <- max col_widths.(i) (visual_width h)
   ) headers;
 
   List.iter (fun row ->
     List.iteri (fun i cell ->
       if i < num_cols then
-        col_widths.(i) <- max col_widths.(i) (String.length cell)
+        col_widths.(i) <- max col_widths.(i) (visual_width cell)
     ) row
   ) rows;
 
   (* Print header *)
   List.iteri (fun i h ->
-    Printf.printf "%-*s" (col_widths.(i) + 2) h;
+    let padding = col_widths.(i) - (visual_width h) + 2 in
+    Printf.printf "%s%s" h (String.make padding ' ');
   ) headers;
   print_newline ();
 
@@ -82,8 +105,10 @@ let print_table headers rows =
   (* Print rows *)
   List.iter (fun row ->
     List.iteri (fun i cell ->
-      if i < num_cols then
-        Printf.printf "%-*s" (col_widths.(i) + 2) cell
+      if i < num_cols then begin
+        let padding = col_widths.(i) - (visual_width cell) + 2 in
+        Printf.printf "%s%s" cell (String.make padding ' ')
+      end
     ) row;
     print_newline ()
   ) rows
@@ -91,8 +116,9 @@ let print_table headers rows =
 (* Pretty print activities list *)
 let print_activities json =
   let activities = json |> to_list in
-  let headers = ["DATE"; "TYPE"; "NAME"; "DISTANCE"; "TIME"; "PACE"] in
+  let headers = ["ID"; "DATE"; "TYPE"; "NAME"; "DISTANCE"; "TIME"; "PACE"] in
   let rows = List.map (fun activity ->
+    let id = activity |> member "id" |> to_int |> string_of_int in
     let date = activity |> member "start_date_local" |> to_string |> format_date in
     let sport = activity |> member "sport_type" |> to_string in
     let emoji = sport_emoji sport in
@@ -102,6 +128,7 @@ let print_activities json =
     let moving_time = activity |> member "moving_time" |> to_int in
     let pace = if sport = "Run" then format_pace distance moving_time else "-" in
     [
+      id;
       date;
       emoji ^ " " ^ sport;
       name_truncated;
@@ -221,8 +248,9 @@ let print_stats json =
 (* Pretty print segments *)
 let print_segments json =
   let segments = json |> to_list in
-  let headers = ["NAME"; "DISTANCE"; "AVG GRADE"; "ELEV"; "CITY"] in
+  let headers = ["ID"; "NAME"; "DISTANCE"; "AVG GRADE"; "ELEV"; "CITY"] in
   let rows = List.map (fun seg ->
+    let id = seg |> member "id" |> to_int |> string_of_int in
     let name = seg |> member "name" |> to_string in
     let name_truncated = if String.length name > 30 then String.sub name 0 27 ^ "..." else name in
     let distance = seg |> member "distance" |> to_float in
@@ -230,6 +258,7 @@ let print_segments json =
     let elev = try seg |> member "elevation_high" |> to_float with _ -> 0.0 in
     let city = try seg |> member "city" |> to_string with _ -> "-" in
     [
+      id;
       name_truncated;
       format_distance distance;
       Printf.sprintf "%.1f%%" grade;
@@ -242,14 +271,16 @@ let print_segments json =
 (* Pretty print routes *)
 let print_routes json =
   let routes = json |> to_list in
-  let headers = ["NAME"; "DISTANCE"; "ELEV GAIN"; "TYPE"] in
+  let headers = ["ID"; "NAME"; "DISTANCE"; "ELEV GAIN"; "TYPE"] in
   let rows = List.map (fun route ->
+    let id = route |> member "id" |> to_int |> string_of_int in
     let name = route |> member "name" |> to_string in
-    let name_truncated = if String.length name > 35 then String.sub name 0 32 ^ "..." else name in
+    let name_truncated = if String.length name > 30 then String.sub name 0 27 ^ "..." else name in
     let distance = route |> member "distance" |> to_float in
     let elev = try route |> member "elevation_gain" |> to_float with _ -> 0.0 in
     let sport = try route |> member "type" |> to_string with _ -> "-" in
     [
+      id;
       name_truncated;
       format_distance distance;
       Printf.sprintf "%.0f m" elev;

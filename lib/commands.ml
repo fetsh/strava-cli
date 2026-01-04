@@ -102,9 +102,20 @@ let last ~mode n =
       Api.get_activity id
     ) activities in
     let successful = List.filter_map (function Ok j -> Some j | Error _ -> None) detailed in
-    let combined = `List successful in
-    let* _ = save_json ~mode ~prefix:"last" ~pretty_printer:Pretty.print_activities combined in
-    Lwt.return 0
+    if n = 1 then begin
+      match successful with
+      | [single] ->
+        let* _ = save_json ~mode ~prefix:"last" ~pretty_printer:Pretty.print_activity single in
+        Lwt.return 0
+      | _ ->
+        let combined = `List successful in
+        let* _ = save_json ~mode ~prefix:"last" ~pretty_printer:Pretty.print_activities combined in
+        Lwt.return 0
+    end else begin
+      let combined = `List successful in
+      let* _ = save_json ~mode ~prefix:"last" ~pretty_printer:Pretty.print_activities combined in
+      Lwt.return 0
+    end
 
 let today ~mode () =
   let now = Unix.time () in
